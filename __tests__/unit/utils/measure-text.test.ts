@@ -88,6 +88,40 @@ describe('measureText', () => {
     expect(spanLayoutSpy).not.toHaveBeenCalled();
   });
 
+  it('includes letter and word spacing in canvas measurements', async () => {
+    vi.spyOn(HTMLCanvasElement.prototype, 'getContext').mockReturnValue({
+      font: '',
+      measureText: () => ({ width: 100 }),
+    } as unknown as CanvasRenderingContext2D);
+
+    const { measureText } = await import('../../../src/utils/measure-text');
+    const metrics = measureText('A B', {
+      fontFamily: 'Arial',
+      fontSize: 20,
+      fontWeight: 'normal',
+      letterSpacing: 2,
+      wordSpacing: 3,
+    });
+
+    expect(metrics.width).toBe(Math.ceil(107 * 1.015));
+  });
+
+  it('includes spacing in the server-side fallback measurement', async () => {
+    vi.stubGlobal('window', undefined);
+    vi.stubGlobal('document', undefined);
+
+    const { measureText } = await import('../../../src/utils/measure-text');
+    const metrics = measureText('A B', {
+      fontFamily: 'Arial',
+      fontSize: 20,
+      fontWeight: 'normal',
+      letterSpacing: 2,
+      wordSpacing: 3,
+    });
+
+    expect(metrics.width).toBe(Math.ceil(16 * 1.015));
+  });
+
   it('falls back to measury when canvas is unavailable and span layout is invalid', async () => {
     vi.spyOn(HTMLCanvasElement.prototype, 'getContext').mockReturnValue(null);
     vi.spyOn(

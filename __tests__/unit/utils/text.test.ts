@@ -47,6 +47,7 @@ describe('text', () => {
         'font-family': 'Arial',
         'line-height': 1.2,
         'letter-spacing': 1,
+        'word-spacing': 2,
       });
 
       const span = textElement.querySelector('span') as HTMLSpanElement;
@@ -55,6 +56,7 @@ describe('text', () => {
       expect(span.style.fontFamily).toBe('Arial');
       expect(span.style.lineHeight).toBe('1.2');
       expect(span.style.letterSpacing).toBe('1px');
+      expect(span.style.wordSpacing).toBe('2px');
     });
 
     it('should handle horizontal alignment', () => {
