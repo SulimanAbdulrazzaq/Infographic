@@ -99,9 +99,11 @@ function resolveSpacing(
 
   const value = spacing.trim();
   if (!value) return 0;
-  const amount = Number.parseFloat(value);
+  const match = value.match(/^([-+]?(?:\d+\.?\d*|\.\d+))(px|em)?$/i);
+  if (!match) return 0;
+  const amount = Number(match[1]);
   if (!Number.isFinite(amount)) return 0;
-  return value.endsWith('em') ? amount * fontSize : amount;
+  return match[2]?.toLowerCase() === 'em' ? amount * fontSize : amount;
 }
 
 function lineSpacing(
@@ -128,17 +130,14 @@ function measureTextInBrowser(
     fontSize: number;
     fontWeight: string | number;
     lineHeight: number | string | undefined;
-    letterSpacing: number | string | undefined;
-    wordSpacing: number | string | undefined;
+    letterSpacing: number;
+    wordSpacing: number;
   },
 ) {
   const lines = content.split(/\r?\n/);
   const normalizedFamily = encodeFontFamily(fontFamily);
   const normalizedWeight = fontWeight || 'normal';
   const lineHeightPx = resolveLineHeight(fontSize, lineHeight);
-  const letterSpacingPx = resolveSpacing(letterSpacing, fontSize);
-  const wordSpacingPx = resolveSpacing(wordSpacing, fontSize);
-
   const context = getCanvasContext();
   if (context) {
     context.font = `${normalizedWeight} ${fontSize}px ${normalizedFamily}`;
@@ -146,7 +145,7 @@ function measureTextInBrowser(
       const metrics = context.measureText(line);
       return Math.max(
         maxWidth,
-        metrics.width + lineSpacing(line, letterSpacingPx, wordSpacingPx),
+        metrics.width + lineSpacing(line, letterSpacing, wordSpacing),
       );
     }, 0);
     return { width, height: lineHeightPx * Math.max(lines.length, 1) };
@@ -158,8 +157,8 @@ function measureTextInBrowser(
   span.style.fontSize = `${fontSize}px`;
   span.style.fontWeight = String(normalizedWeight);
   span.style.lineHeight = `${lineHeightPx}px`;
-  span.style.letterSpacing = `${letterSpacingPx}px`;
-  span.style.wordSpacing = `${wordSpacingPx}px`;
+  span.style.letterSpacing = `${letterSpacing}px`;
+  span.style.wordSpacing = `${wordSpacing}px`;
   span.textContent = content;
   const rect = span.getBoundingClientRect();
   if (content && rect.width <= 0 && rect.height <= 0) return null;
@@ -187,35 +186,20 @@ export function measureText(
 
   const content = text.toString();
   ensureMeasuryFont(fontFamily);
+  const normalizedFontSize = parseFloat(fontSize.toString());
   const options = {
     fontFamily,
-    fontSize: parseFloat(fontSize.toString()),
+    fontSize: normalizedFontSize,
     fontWeight,
     lineHeight,
-    letterSpacing,
-    wordSpacing,
+    letterSpacing: resolveSpacing(letterSpacing, normalizedFontSize),
+    wordSpacing: resolveSpacing(wordSpacing, normalizedFontSize),
   };
-  const fallback = () => {
-    const metrics = measure(content, {
+  const fallback = () =>
+    measure(content, {
       ...options,
       fontFamily: decodeFontFamily(fontFamily),
     });
-    const spacingWidth = content
-      .split(/\r?\n/)
-      .reduce(
-        (maxWidth, line) =>
-          Math.max(
-            maxWidth,
-            lineSpacing(
-              line,
-              resolveSpacing(letterSpacing, options.fontSize),
-              resolveSpacing(wordSpacing, options.fontSize),
-            ),
-          ),
-        0,
-      );
-    return { ...metrics, width: metrics.width + spacingWidth };
-  };
   const metrics = measureTextInBrowser(content, options) ?? fallback();
 
   // 额外添加 1% 宽高
