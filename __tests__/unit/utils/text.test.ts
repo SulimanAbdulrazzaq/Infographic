@@ -219,6 +219,16 @@ describe('text spacing', () => {
       expect(style.letterSpacing).toBeUndefined();
       expect(style.wordSpacing).toBeUndefined();
     });
+
+    it('should skip null spacing instead of throwing', () => {
+      const style = getTextStyle({
+        'letter-spacing': null,
+        'word-spacing': null,
+      } as any);
+
+      expect(style.letterSpacing).toBeUndefined();
+      expect(style.wordSpacing).toBeUndefined();
+    });
   });
 
   describe('updateTextElement measurement', () => {

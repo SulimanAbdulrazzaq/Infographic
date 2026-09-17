@@ -174,9 +174,8 @@ export function getTextStyle(attributes: TextAttributes) {
       typeof lineHeight === 'string' && lineHeight.endsWith('px')
         ? lineHeight
         : +lineHeight;
-  if (letterSpacing !== undefined)
-    style.letterSpacing = formatSpacing(letterSpacing);
-  if (wordSpacing !== undefined) style.wordSpacing = formatSpacing(wordSpacing);
+  if (letterSpacing != null) style.letterSpacing = formatSpacing(letterSpacing);
+  if (wordSpacing != null) style.wordSpacing = formatSpacing(wordSpacing);
   if (strokeWidth) style.strokeWidth = `${strokeWidth}px`;
   if (fontFamily) style.fontFamily = encodeFontFamily(fontFamily);
 
